@@ -108,13 +108,13 @@ the highScore object in gamestate will always have the current
 score when you press reset*/
 function resetHighScore() {
   high_score = 0;
-  highScore.innerHTML = "High Score: 0";
-  console.log("hi");
   gameState.highScore.user = 'nobody';
   gameState.highScore.score = 0;
   gameState.highScore.date = new Date().toGMTString();
   gameState.gameHistory.splice(0, gameState.gameHistory.length);//clear out history too
   myStorage.setItem('gameState', JSON.stringify(gameState));
+  highScore.innerHTML = "High Score: 0";
+  historyText.innerHTML = "...";
 }
 function changeUserName() {
   if(nameInputBox.value === '') 
@@ -222,7 +222,6 @@ function handleTime() {
  */
 let update = function () {
   handleTime();
-
   if(gameFinished === false) {
     if (38 in keysDown) { // Player is holding up key
       heroY -= 5;
@@ -236,25 +235,17 @@ let update = function () {
         currPlayerPosition--;
         heroX = heroXPositions[currPlayerPosition];
       }
-      // wait(100);
-      
-
-      
     }
     if (39 in keysDown) { // Player is holding right key
       delete keysDown[39];
-
       if(currPlayerPosition < heroXPositions.length-1) {
         currPlayerPosition++;
         heroX = heroXPositions[currPlayerPosition];
       }
-      // wait(100);
     }
   }
-  // heroBoundaries();
   monsterBoundaries();
   randomMonsterMovement();
- 
   if (
     heroX <= (monsterX + MONSTER_WIDTH)
     && monsterX <= (heroX + MONSTER_WIDTH)
@@ -264,7 +255,6 @@ let update = function () {
     // Pick a new location for the monster.
     // Note: Change this to place the monster at a new, random location.
     randomSpeed = Math.max(5, Math.random() * 12);//pick new speed after collision
-
     monsterX = monsterXPositions[Math.floor(Math.random() * 4)];
     monsterY = 0;
     ++score;
@@ -296,6 +286,7 @@ function monsterBoundaries() {
     monsterY = canvas.height-25;
   }
   if(monsterY > canvas.height-25) {
+    monsterX = monsterXPositions[Math.floor(Math.random() * monsterXPositions.length)];
     monsterY = 0;
   }
 };
@@ -360,6 +351,7 @@ var render = function () {
   
   scoreDisplay.innerHTML = `Current score: ${score}`;
   ctx.fillText(`Score: ${score}`, 5, 70);
+  // ctx.fillText(`Game Over`, 5, 120);
 };
 
 /**
