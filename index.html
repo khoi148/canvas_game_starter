@@ -7,21 +7,32 @@
     <link rel="stylesheet" href="css/style.css">
   </head>
   <body>
-    <div class="container p-3 d-flex flex-row">
-      
-      <div class="container d-flex flex-column bg-primary p-3">
-        <h2 id="scorekeeper"></h1>
-        <h2 id="nameBox">Player Name: </h2>
-        <div class="my-2">
+    <div class="container p-3 row">
+      <div class="container col-sm-5 d-flex flex-column bg-primary align-items-center p-4">
+        <h2 id="scorekeeper">Current Score:</h2>
+        <h2 id="highScore">...</h2>
+        <div class="my-4 d-flex">
+          <span id="nameBox">Player Name: </span>
           <input id="nameInputBox" class="w-50" type="text"/>
           <button id="submitNameButton" class="">Submit</button>
         </div>
-        <button id="startButton" class="w-25 btn bg-warning">Start</button>
-        <button id="resetButton" class="w-25 btn bg-warning" hidden>Reset</button>
-        <button id="seeGameState" class="w-50">See Game State</button>
-        <button id="resetHighScoreButton" class="w-50">Reset Leaderboard</button>
+        <div class="gameDescription mb-3 text-center">
+          <p class="">
+            Lorem ipsum, dolor sit amet consectetur adipisicing elit. 
+            Ad tempora nostrum odit quasi dolore! Repellendus iste 
+            quasi ex similique. Natus aliquid odio soluta quas, 
+            suscipit voluptatibus nihil mollitia architecto nulla.
+          </p>
+        </div>
+        <div class="d-flex row gameButtons">
+          <button id="startButton" class="col mx-2 btn bg-warning">Start</button>
+          <button id="resetButton" class="col mx-2 btn bg-warning" hidden>Reset</button>
+          <button id="seeGameState" class="col mx-2 btn bg-warning">Gamestate</button>
+          <button id="resetHighScoreButton" class="col mx-2 btn bg-warning">Erase</button>
+        </div>
+        
         <div id="historySection">
-          <p id="highScore">...</p>
+         
           <p id="historyText">...</p>
         </div>
       </div>

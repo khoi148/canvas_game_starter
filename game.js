@@ -54,13 +54,13 @@ const myStorage = window.localStorage;
 
 function startGame () {
   startButton.hidden = true;
+  startTime = Date.now();
   main();
 }
 function setupGameState() {
   try {
     gameState = JSON.parse(myStorage.getItem('gameState'));
     gameState.currentUser = currUser;
-    high_score = gameState.highScore.score;
   } catch (e) {
       console.log('No prior game state found. Making new Game state');
       gameState = {
@@ -79,7 +79,7 @@ function setupGameState() {
       myStorage.setItem('gameState', JSON.stringify(gameState));
   }
   high_score = gameState.highScore.score;
-  highScoreText.innerHTML = `High Score: ${high_score} - user: ${gameState.highScore.user}`;
+  highScoreText.innerHTML = `High Score: ${high_score} (user: ${gameState.highScore.user})`;
 }
 function editGameState() {
   // let match = {
@@ -97,6 +97,12 @@ function seeGameState() {
   console.log(gameState);
   // myStorage.setItem('gameState', JSON.stringify(gameState));
 }
+/*Problem is highScore will always be overriden
+by the constantly running update(). So the handleTime()
+is always setting the gamestate highScore if 
+score > high_score. So unless the current score is 0,
+the highScore object in gamestate will always have the current
+score when you press reset*/
 function resetHighScore() {
   gameState.highScore.user = 'nobody';
   gameState.highScore.score = 0;
@@ -111,15 +117,20 @@ function changeUserName() {
   nameBox.innerHTML = `Player Name: ${nameInputBox.value}`;
   currUser = nameInputBox.value;
   gameState.currentUser = nameInputBox.value;
-  gameState.currentUser = nameInputBox.value;
-  console.log('hi');
   nameInputBox.value = '';//clear input
+  nameInputBox.hidden = true;
+  submitNameButton.hidden = true;
 }
 function resetGame() {
   //record match first
-  
+  let match = {
+    user: currUser,
+    score: score,
+    date: new Date().toGMTString()
+  }
+  gameState.gameHistory.push(match);
   // historyScoresArray.push(match);
-  historyText.innerHTML = JSON.stringify(historyScoresArray);
+  historyText.innerHTML = JSON.stringify(gameState.gameHistory);
   //reset values
   score = 0;
   scoreDisplay.innerHTML = `Current Score: ${score}`;
@@ -188,6 +199,9 @@ function setupKeyboardListeners() {
   }, false);
 }
 
+/*Displays time as game progresses and handles what 
+happens when user runs out of time. Round ends, high
+score gets recorded and uploaded to myStorage leaderboard */
 function handleTime() {
   // Update the time.
   elapsedTime = Math.floor((Date.now() - startTime) / 1000);
@@ -199,7 +213,7 @@ function handleTime() {
     editGameState();//update game States high score at end of a round
     if(score > high_score) {
       high_score = score;
-      highScoreText.innerHTML = `High Score: ${high_score}`;
+      highScoreText.innerHTML = `High Score: ${high_score} (user: ${currUser})`;
     }
     myStorage.setItem('gameState', JSON.stringify(gameState));
   }
@@ -320,7 +334,7 @@ var render = function () {
  * render (based on the state of our game, draw the right things)
  */
 var main = function () {
-  setupGameState();
+  // setupGameState();
   update(); 
   render();
   // Request to do this again ASAP. This is a special method
