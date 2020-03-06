@@ -1,8 +1,8 @@
 * {
     font-family: Arial, Helvetica, sans-serif;
 }
-h2 {
-    font-size: 26px;
+#scorekeeper, #highScore {
+    font-size: 14px;
 }
 .gameButtons > button{
     height: 40px;

@@ -12,12 +12,16 @@ We also load all of our images.
 
 let canvas;
 let ctx;
+let randomSpeed = Math.max(5, Math.random() * 12);
 
 // canvas = document.createElement("canvas");
 canvas = document.getElementById('mycanvas');
 ctx = canvas.getContext("2d");
-canvas.width = 512;
-canvas.height = 480;
+canvas.width = 600;
+canvas.height = 600;
+let HERO_HEIGHT = 100;
+let HERO_WIDTH = 100;
+let MONSTER_WIDTH = 100;
 // document.body.appendChild(canvas);
 
 let bgReady, heroReady, monsterReady;
@@ -29,7 +33,6 @@ let elapsedTime = 0;
 let score = 0;
 let gameFinished = false;
 let timeLeft;
-let currRound = 1;
 let high_score = 0;
 const historyScoresArray = [];
 let gameState = {};
@@ -104,6 +107,9 @@ score > high_score. So unless the current score is 0,
 the highScore object in gamestate will always have the current
 score when you press reset*/
 function resetHighScore() {
+  high_score = 0;
+  highScore.innerHTML = "High Score: 0";
+  console.log("hi");
   gameState.highScore.user = 'nobody';
   gameState.highScore.score = 0;
   gameState.highScore.date = new Date().toGMTString();
@@ -138,31 +144,11 @@ function resetGame() {
   //record new starting time
   startTime = Date.now();
   resetButton.hidden = true;
-  ++currRound;
-  // console.log(historyScoresArray);
+  monsterY = 0;
+  monsterX = monsterXPositions[Math.floor(Math.random() * monsterXPositions.length)];
 }
 
-function loadImages() {
-  bgImage = new Image();
-  bgImage.onload = function () {
-    // show the background image
-    bgReady = true;
-  };
-  bgImage.src = "images/background.png";
-  heroImage = new Image();
-  heroImage.onload = function () {
-    // show the hero image
-    heroReady = true;
-  };
-  heroImage.src = "images/hero.png";
 
-  monsterImage = new Image();
-  monsterImage.onload = function () {
-    // show the monster image
-    monsterReady = true;
-  };
-  monsterImage.src = "images/car2-sm.png";
-}
 
 /** 
  * Setting up our characters.
@@ -173,13 +159,20 @@ function loadImages() {
  * 
  * The same applies to the monster.
  */
+const heroXPositions = [40, 180, 320, 460];
+let increment = 15;
+const monsterXPositions = [heroXPositions[0]+increment, heroXPositions[1]+increment, heroXPositions[2]+increment, heroXPositions[3]+increment];
+let currPlayerPosition = 1;//index in the heroXPositions
+let heroX;
+let heroY;
 
-let heroX = canvas.width / 2;
-let heroY = canvas.height / 2;
+let monsterX;
+let monsterY;
+  heroX = heroXPositions[1];
+  heroY = canvas.height-HERO_HEIGHT;
 
-let monsterX = 100;
-let monsterY = 100;
-
+  monsterX = monsterXPositions[1];
+  monsterY = 0;
 /** 
  * Keyboard Listeners
  * You can safely ignore this part, for now. 
@@ -191,7 +184,7 @@ function setupKeyboardListeners() {
   // Check for keys pressed where key represents the keycode captured
   // For now, do not worry too much about what's happening here. 
   addEventListener("keydown", function (key) {
-    keysDown[key.keyCode] = true;
+  keysDown[key.keyCode] = true;
   }, false);
 
   addEventListener("keyup", function (key) {
@@ -209,7 +202,7 @@ function handleTime() {
     timeLeft = 0;
     gameFinished = true;
     resetButton.hidden = false;
-
+    
     editGameState();//update game States high score at end of a round
     if(score > high_score) {
       high_score = score;
@@ -238,46 +231,60 @@ let update = function () {
       heroY += 5;
     }
     if (37 in keysDown) { // Player is holding left key
-      heroX -= 5;
+      delete keysDown[37];
+      if(currPlayerPosition > 0) {
+        currPlayerPosition--;
+        heroX = heroXPositions[currPlayerPosition];
+      }
+      // wait(100);
+      
+
+      
     }
     if (39 in keysDown) { // Player is holding right key
-      heroX += 5;
+      delete keysDown[39];
+
+      if(currPlayerPosition < heroXPositions.length-1) {
+        currPlayerPosition++;
+        heroX = heroXPositions[currPlayerPosition];
+      }
+      // wait(100);
     }
   }
-  heroBoundaries();
+  // heroBoundaries();
   monsterBoundaries();
   randomMonsterMovement();
  
   if (
-    heroX <= (monsterX + 32)
-    && monsterX <= (heroX + 32)
-    && heroY <= (monsterY + 32)
-    && monsterY <= (heroY + 32)
+    heroX <= (monsterX + MONSTER_WIDTH)
+    && monsterX <= (heroX + MONSTER_WIDTH)
+    && heroY <= (monsterY + MONSTER_WIDTH-80)
+    && monsterY <= (heroY + MONSTER_WIDTH)
   ) {
     // Pick a new location for the monster.
     // Note: Change this to place the monster at a new, random location.
-    monsterX = Math.floor(Math.random() * canvas.width-25);
-    monsterY = Math.floor(Math.random() * canvas.height-25);
+    randomSpeed = Math.max(5, Math.random() * 12);//pick new speed after collision
+
+    monsterX = monsterXPositions[Math.floor(Math.random() * 4)];
+    monsterY = 0;
     ++score;
-
   }
 };
 
-
-function heroBoundaries() {
-  if(heroX < 0) {
-    heroX = canvas.width-25;
-  }
-  if(heroX > canvas.width-25) {
-    heroX = 0;
-  }
-  if(heroY < 0) {
-    heroY = canvas.height-25;
-  }
-  if(heroY > canvas.height-25) {
-    heroY = 0;
-  }
-};
+// function heroBoundaries() {
+//   if(heroX < 0) {
+//     heroX = canvas.width-25;
+//   }
+//   if(heroX > canvas.width-25) {
+//     heroX = 0;
+//   }
+//   if(heroY < 0) {
+//     heroY = canvas.height-25;
+//   }
+//   if(heroY > canvas.height-25) {
+//     heroY = 0;
+//   }
+// };
 function monsterBoundaries() {
   if(monsterX < 0) {
     monsterX = canvas.width-25;
@@ -293,18 +300,45 @@ function monsterBoundaries() {
   }
 };
 function randomMonsterMovement() {
-  let monsterXMovement = Math.random() * 4;
-  let monsterYMovement = Math.random() * 4;
-  // if(Math.random() <= 0.49)
-  //   monsterXMovement = -monsterXMovement;
-  // if(Math.random() <= 0.49)
-  //   monsterYMovement = -monsterYMovement;
+  // let monsterXMovement = random;
+  let monsterYMovement = randomSpeed;
   if(gameFinished === false) {
-    monsterX = monsterX + monsterXMovement;
+    // monsterX = monsterX + monsterXMovement;
     monsterY = monsterY + monsterYMovement;
   }
   // Check if player and monster collided. Our images
-  // are about 32 pixels big.
+  // are about 64 pixels big.
+}
+
+function wait(ms){
+  var start = new Date().getTime();
+  var end = start;
+  while (end < start+ms){
+    end = new Date().getTime();
+  }
+}
+
+function loadImages() {
+  bgImage = new Image();
+  bgImage.onload = function () {
+    // show the background image
+    bgReady = true;
+  };
+  bgImage.src = "images/background5.jpg";
+  heroImage = new Image();
+  heroImage.onload = function () {
+    // show the hero image
+    heroReady = true;
+  };
+  heroImage.src = "images/basket.png";
+
+  monsterImage = new Image();
+  monsterImage.onload = function () {
+    // show the monster image
+    monsterReady = true;
+  };
+  monsterImage.src = "images/heart-pixel-art-64x64.png";
+
 }
 /**
  * This function, render, runs as often as possible.
