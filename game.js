@@ -24,11 +24,11 @@ let HERO_WIDTH = 100;
 let MONSTER_WIDTH = 100;
 // document.body.appendChild(canvas);
 
-let bgReady, heroReady, monsterReady;
-let bgImage, heroImage, monsterImage;
+let bgReady, heroReady, monsterReady, monster2Ready;
+let bgImage, heroImage, monsterImage, monster2Image;
 
 let startTime = Date.now();
-const SECONDS_PER_ROUND = 6;
+const SECONDS_PER_ROUND = 15;
 let elapsedTime = 0;
 let score = 0;
 let gameFinished = false;
@@ -144,8 +144,10 @@ function resetGame() {
   //record new starting time
   startTime = Date.now();
   resetButton.hidden = true;
-  monsterY = 0;
-  monsterX = monsterXPositions[Math.floor(Math.random() * monsterXPositions.length)];
+  for(let mon = 0; mon < monsterArray.length; mon++) {
+    monsterArray[mon].yposition = 0;
+    monsterArray[mon].xposition = monsterXPositions[Math.floor(Math.random() * monsterXPositions.length)];
+  }
 }
 
 
@@ -166,13 +168,40 @@ let currPlayerPosition = 1;//index in the heroXPositions
 let heroX;
 let heroY;
 
-let monsterX;
-let monsterY;
-  heroX = heroXPositions[1];
-  heroY = canvas.height-HERO_HEIGHT;
+let monsterX, monster2X;
+let monsterY, monster2Y;
+let monster1 = {
+  source: "images/star.png",
+  xposition: monsterXPositions[Math.floor(Math.random() * 4)],
+  yposition: 0,
+  ready: false,
+  speed: Math.max(3, Math.random() * 6)
+};
+let monster2 = {
+  source: "images/heart-pixel-art-64x64.png",
+  xposition: monsterXPositions[Math.floor(Math.random() * 4)],
+  yposition: 0,
+  ready: false,
+  speed: Math.max(5, Math.random() * 10)
+};
+let monster3 = {
+  source: "images/milk.png",
+  xposition: monsterXPositions[Math.floor(Math.random() * 4)],
+  yposition: 0,
+  ready: false,
+  speed: Math.max(8, Math.random() * 14)
+};
+let monsterArray = [];
+let monsterImagesArray = [];
+monsterArray.push(monster1, monster2, monster3);
 
-  monsterX = monsterXPositions[1];
-  monsterY = 0;
+heroX = heroXPositions[1];
+heroY = canvas.height-HERO_HEIGHT;
+
+monsterX = monsterXPositions[1];
+monsterY = 0;
+monster2X = monsterXPositions[2];
+monster2Y = 0;
 /** 
  * Keyboard Listeners
  * You can safely ignore this part, for now. 
@@ -224,10 +253,10 @@ let update = function () {
   handleTime();
   if(gameFinished === false) {
     if (38 in keysDown) { // Player is holding up key
-      heroY -= 5;
+      heroY -= 15;
     }
     if (40 in keysDown) { // Player is holding down key
-      heroY += 5;
+      heroY += 15;
     }
     if (37 in keysDown) { // Player is holding left key
       delete keysDown[37];
@@ -245,67 +274,51 @@ let update = function () {
     }
   }
   monsterBoundaries();
+  heroBoundaries();
   randomMonsterMovement();
-  if (
-    heroX <= (monsterX + MONSTER_WIDTH)
-    && monsterX <= (heroX + MONSTER_WIDTH)
-    && heroY <= (monsterY + MONSTER_WIDTH-80)
-    && monsterY <= (heroY + MONSTER_WIDTH)
-  ) {
-    // Pick a new location for the monster.
-    // Note: Change this to place the monster at a new, random location.
-    randomSpeed = Math.max(5, Math.random() * 12);//pick new speed after collision
-    monsterX = monsterXPositions[Math.floor(Math.random() * 4)];
-    monsterY = 0;
-    ++score;
+  // Check if player and monster collided. Our images are about 100 pixels big
+  for(let mon = 0; mon < monsterArray.length; mon++) {
+    if (
+      heroX <= (monsterArray[mon].xposition + MONSTER_WIDTH)
+      && monsterArray[mon].xposition  <= (heroX + HERO_WIDTH)
+      && heroY <= (monsterArray[mon].yposition + MONSTER_WIDTH-80)
+      && (monsterArray[mon].yposition <= heroY + HERO_HEIGHT)
+    ) {
+      // Pick a new location for the monster.
+      // Note: Change this to place the monster at a new, random location.
+      // randomSpeed = Math.max(5, Math.random() * 12);//pick new speed after collision
+      monsterArray[mon].yposition = 0 - Math.random()*300;
+      monsterArray[mon].xposition = monsterXPositions[Math.floor(Math.random()*4)];
+      ++score;
+    }
   }
 };
 
-// function heroBoundaries() {
-//   if(heroX < 0) {
-//     heroX = canvas.width-25;
-//   }
-//   if(heroX > canvas.width-25) {
-//     heroX = 0;
-//   }
-//   if(heroY < 0) {
-//     heroY = canvas.height-25;
-//   }
-//   if(heroY > canvas.height-25) {
-//     heroY = 0;
-//   }
-// };
+function heroBoundaries() {
+  if(heroY < 0) {
+    heroY = 0;
+  }
+  if(heroY > canvas.height-HERO_HEIGHT) {
+    heroY = canvas.height-HERO_HEIGHT;
+  }
+};
 function monsterBoundaries() {
-  if(monsterX < 0) {
-    monsterX = canvas.width-25;
-  }
-  if(monsterX > canvas.width-25) {
-    monsterX = 0;
-  }
-  if(monsterY < 0) {
-    monsterY = canvas.height-25;
-  }
-  if(monsterY > canvas.height-25) {
-    monsterX = monsterXPositions[Math.floor(Math.random() * monsterXPositions.length)];
-    monsterY = 0;
+  for(let mon = 0; mon < monsterArray.length; mon++) {
+    // if(monsterY < 0) {
+    //   monsterY = canvas.height-25;
+    // }
+    if(monsterArray[mon].yposition > canvas.height) {
+      monsterArray[mon].xposition = monsterXPositions[Math.floor(Math.random() * monsterXPositions.length)];
+      monsterArray[mon].yposition = 0 - Math.random()*300;
+    }
   }
 };
 function randomMonsterMovement() {
   // let monsterXMovement = random;
-  let monsterYMovement = randomSpeed;
   if(gameFinished === false) {
-    // monsterX = monsterX + monsterXMovement;
-    monsterY = monsterY + monsterYMovement;
-  }
-  // Check if player and monster collided. Our images
-  // are about 64 pixels big.
-}
-
-function wait(ms){
-  var start = new Date().getTime();
-  var end = start;
-  while (end < start+ms){
-    end = new Date().getTime();
+    for(let mon = 0; mon < monsterArray.length; mon++) {
+      monsterArray[mon].yposition += monsterArray[mon].speed;
+    }
   }
 }
 
@@ -323,12 +336,31 @@ function loadImages() {
   };
   heroImage.src = "images/basket.png";
 
-  monsterImage = new Image();
-  monsterImage.onload = function () {
-    // show the monster image
-    monsterReady = true;
-  };
-  monsterImage.src = "images/heart-pixel-art-64x64.png";
+  for(let mon = 0; mon < monsterArray.length; mon++) {
+    let newimage = new Image();
+    monsterImagesArray.push(newimage);
+    newimage.onload = function () {
+      // show the monster image
+      monsterArray[mon].ready = true;
+    };
+    newimage.src = monsterArray[mon].source;
+  }
+
+  // monsterImage.src = "images/heart-pixel-art-64x64.png";
+  // }
+  // monsterImage = new Image();
+  // monsterImage.onload = function () {
+  //   // show the monster image
+  //   monsterReady = true;
+  // };
+  // monsterImage.src = "images/heart-pixel-art-64x64.png";
+
+  // monster2Image = new Image();
+  // monster2Image.onload = function () {
+  //   // show the monster image
+  //   monster2Ready = true;
+  // };
+  // monster2Image.src = "images/star.png";
 
 }
 /**
@@ -341,9 +373,16 @@ var render = function () {
   if (heroReady) {
     ctx.drawImage(heroImage, heroX, heroY);
   }
-  if (monsterReady) {
-    ctx.drawImage(monsterImage, monsterX, monsterY);
+  for(let mon = 0; mon < monsterArray.length; mon++) {
+    if(monsterArray[mon].ready === true)
+      ctx.drawImage(monsterImagesArray[mon], monsterArray[mon].xposition, monsterArray[mon].yposition);
   }
+  // if (monsterReady) {
+  //   ctx.drawImage(monsterImage, monsterX, monsterY);
+  // }
+  // if (monster2Ready) {
+  //   ctx.drawImage(monster2Image, monster2X, monster2Y);
+  // }
   
   ctx.fillStyle = "#eeeeee"; 
   ctx.font = "bold 24px verdana, sans-serif ";
