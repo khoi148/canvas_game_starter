@@ -28,7 +28,7 @@ let bgReady, heroReady, monsterReady, monster2Ready;
 let bgImage, heroImage, monsterImage, monster2Image;
 
 let startTime = Date.now();
-const SECONDS_PER_ROUND = 15;
+const SECONDS_PER_ROUND = 12;
 let elapsedTime = 0;
 let score = 0;
 let gameFinished = false;
@@ -43,11 +43,12 @@ const submitNameButton = document.getElementById('submitNameButton');
 const scoreDisplay = document.getElementById('scorekeeper');
 const nameBox = document.getElementById('nameBox');
 const resetButton = document.getElementById('resetButton');
-const historyText = document.getElementById('historyText');
 const highScoreText = document.getElementById('highScore');
 const gameStateButton = document.getElementById('seeGameState');
 const resetHighScoreButton = document.getElementById('resetHighScoreButton');
 const startButton = document.getElementById('startButton');
+const historyTable = document.getElementById('historyTable');
+
 startButton.addEventListener('click', startGame);
 submitNameButton.addEventListener('click', changeUserName);
 resetButton.addEventListener('click', resetGame);
@@ -64,6 +65,7 @@ function setupGameState() {
   try {
     gameState = JSON.parse(myStorage.getItem('gameState'));
     gameState.currentUser = currUser;
+    console.log(gameState);
   } catch (e) {
       console.log('No prior game state found. Making new Game state');
       gameState = {
@@ -73,11 +75,7 @@ function setupGameState() {
           score: 0,
           date: new Date().toGMTString()
         },
-        gameHistory: [
-          { user: "Chloe", score: 21, date: "Thu Oct 01 2019 15:11:51 GMT-6000" },
-          { user: "Duc", score: 19, date: "Thu Sep 03 2019 15:11:51 GMT+0700" },
-          { user: "Huy", score: 18, date: "Thu Oct 03 2019 15:11:51 GMT+0700" }
-        ]
+        gameHistory: []
       };
       myStorage.setItem('gameState', JSON.stringify(gameState));
   }
@@ -85,20 +83,14 @@ function setupGameState() {
   highScoreText.innerHTML = `High Score: ${high_score} (user: ${gameState.highScore.user})`;
 }
 function editGameState() {
-  // let match = {
-  //   round: currRound,
-  //   scored: score
-  // }
   if(gameState.highScore.score < score) {
     gameState.highScore.user = currUser;
     gameState.highScore.score = score;
     gameState.highScore.date = new Date().toGMTString()
   }
-
 }
 function seeGameState() {
   console.log(gameState);
-  // myStorage.setItem('gameState', JSON.stringify(gameState));
 }
 /*Problem is highScore will always be overriden
 by the constantly running update(). So the handleTime()
@@ -114,7 +106,7 @@ function resetHighScore() {
   gameState.gameHistory.splice(0, gameState.gameHistory.length);//clear out history too
   myStorage.setItem('gameState', JSON.stringify(gameState));
   highScore.innerHTML = "High Score: 0";
-  historyText.innerHTML = "...";
+  deleteHistoryTable();
 }
 function changeUserName() {
   if(nameInputBox.value === '') 
@@ -127,6 +119,22 @@ function changeUserName() {
   nameInputBox.hidden = true;
   submitNameButton.hidden = true;
 }
+
+function deleteHistoryTable() {
+  for(let x = historyTable.rows.length-1; x>0; x--) {//first row 1, is the header row
+    historyTable.deleteRow(x);
+  }
+}
+function updateHistoryTable() {
+    deleteHistoryTable();
+    for(let x=gameState.gameHistory.length-1; x>=0; x--) {
+      let newRow = historyTable.insertRow();
+      let user = gameState.gameHistory[x].user;
+      let score = gameState.gameHistory[x].score;
+      let date = gameState.gameHistory[x].date;
+      newRow.innerHTML = `<td>${user}</td><td>${score}</td><td>${date}</td>`;
+    }
+}
 function resetGame() {
   //record match first
   let match = {
@@ -135,8 +143,8 @@ function resetGame() {
     date: new Date().toGMTString()
   }
   gameState.gameHistory.push(match);
-  // historyScoresArray.push(match);
-  historyText.innerHTML = JSON.stringify(gameState.gameHistory);
+  updateHistoryTable();
+  myStorage.setItem('gameState', JSON.stringify(gameState)); 
   //reset values
   score = 0;
   scoreDisplay.innerHTML = `Current Score: ${score}`;
@@ -149,8 +157,6 @@ function resetGame() {
     monsterArray[mon].xposition = monsterXPositions[Math.floor(Math.random() * monsterXPositions.length)];
   }
 }
-
-
 
 /** 
  * Setting up our characters.
@@ -165,11 +171,9 @@ const heroXPositions = [40, 180, 320, 460];
 let increment = 15;
 const monsterXPositions = [heroXPositions[0]+increment, heroXPositions[1]+increment, heroXPositions[2]+increment, heroXPositions[3]+increment];
 let currPlayerPosition = 1;//index in the heroXPositions
-let heroX;
-let heroY;
+let heroX = heroXPositions[1];
+let heroY = canvas.height-HERO_HEIGHT;
 
-let monsterX, monster2X;
-let monsterY, monster2Y;
 let monster1 = {
   source: "images/star.png",
   xposition: monsterXPositions[Math.floor(Math.random() * 4)],
@@ -195,13 +199,6 @@ let monsterArray = [];
 let monsterImagesArray = [];
 monsterArray.push(monster1, monster2, monster3);
 
-heroX = heroXPositions[1];
-heroY = canvas.height-HERO_HEIGHT;
-
-monsterX = monsterXPositions[1];
-monsterY = 0;
-monster2X = monsterXPositions[2];
-monster2Y = 0;
 /** 
  * Keyboard Listeners
  * You can safely ignore this part, for now. 
@@ -304,9 +301,6 @@ function heroBoundaries() {
 };
 function monsterBoundaries() {
   for(let mon = 0; mon < monsterArray.length; mon++) {
-    // if(monsterY < 0) {
-    //   monsterY = canvas.height-25;
-    // }
     if(monsterArray[mon].yposition > canvas.height) {
       monsterArray[mon].xposition = monsterXPositions[Math.floor(Math.random() * monsterXPositions.length)];
       monsterArray[mon].yposition = 0 - Math.random()*300;
@@ -314,7 +308,6 @@ function monsterBoundaries() {
   }
 };
 function randomMonsterMovement() {
-  // let monsterXMovement = random;
   if(gameFinished === false) {
     for(let mon = 0; mon < monsterArray.length; mon++) {
       monsterArray[mon].yposition += monsterArray[mon].speed;
@@ -345,23 +338,6 @@ function loadImages() {
     };
     newimage.src = monsterArray[mon].source;
   }
-
-  // monsterImage.src = "images/heart-pixel-art-64x64.png";
-  // }
-  // monsterImage = new Image();
-  // monsterImage.onload = function () {
-  //   // show the monster image
-  //   monsterReady = true;
-  // };
-  // monsterImage.src = "images/heart-pixel-art-64x64.png";
-
-  // monster2Image = new Image();
-  // monster2Image.onload = function () {
-  //   // show the monster image
-  //   monster2Ready = true;
-  // };
-  // monster2Image.src = "images/star.png";
-
 }
 /**
  * This function, render, runs as often as possible.
@@ -377,20 +353,14 @@ var render = function () {
     if(monsterArray[mon].ready === true)
       ctx.drawImage(monsterImagesArray[mon], monsterArray[mon].xposition, monsterArray[mon].yposition);
   }
-  // if (monsterReady) {
-  //   ctx.drawImage(monsterImage, monsterX, monsterY);
-  // }
-  // if (monster2Ready) {
-  //   ctx.drawImage(monster2Image, monster2X, monster2Y);
-  // }
-  
   ctx.fillStyle = "#eeeeee"; 
   ctx.font = "bold 24px verdana, sans-serif ";
   ctx.fillText(`Seconds Remaining: ${timeLeft}`, 5, 30);
   
   scoreDisplay.innerHTML = `Current score: ${score}`;
   ctx.fillText(`Score: ${score}`, 5, 70);
-  // ctx.fillText(`Game Over`, 5, 120);
+  if(SECONDS_PER_ROUND - elapsedTime <= 0)
+    ctx.fillText(`Round Over`, 200, canvas.height/2);
 };
 
 /**
@@ -416,4 +386,4 @@ requestAnimationFrame = w.requestAnimationFrame || w.webkitRequestAnimationFrame
 loadImages();
 setupKeyboardListeners();
 setupGameState();
-// main();
+updateHistoryTable();
